@@ -1,0 +1,46 @@
+
+{% extends "projects/base.html" %}
+
+{% block title %}Projects | TaskFlow{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>My Projects</h1>
+    <p class="muted">Create and manage your projects in one place.</p>
+
+    <a href="{% url 'projects:create' %}" class="button">
+        + Create Project
+    </a>
+</div>
+
+{% for project in projects %}
+    <div class="card">
+        <h2>
+            <a href="{% url 'projects:detail' project.pk %}">
+                {{ project.name }}
+            </a>
+        </h2>
+
+        <p>{{ project.description|default:"No description provided." }}</p>
+
+        <p>
+            <strong>Status:</strong> {{ project.get_status_display }}
+        </p>
+
+        <p>
+            <strong>Deadline:</strong>
+            {{ project.deadline|default:"Not set" }}
+        </p>
+
+        <a href="{% url 'projects:detail' project.pk %}"
+           class="button">
+            View Project
+        </a>
+    </div>
+{% empty %}
+    <div class="card">
+        <h2>No projects yet</h2>
+        <p>Create your first project to get started.</p>
+    </div>
+{% endfor %}
+{% endblock %}

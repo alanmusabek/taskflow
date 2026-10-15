@@ -1,0 +1,14 @@
+{% extends "projects/base.html" %}
+{% load comments_tags %}
+
+{% block title %}Comments | TaskFlow{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Comments: {{ task.title }}</h1>
+    <a href="{% url 'tasks:detail' task.pk %}"
+       class="button button-secondary">Back to task</a>
+</div>
+
+{% task_comments task %}
+{% endblock %}

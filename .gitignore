@@ -6,4 +6,6 @@ __pycache__/
 .idea/
 .vscode/
 .pytest_cache/
-/.DS_Store
+.DS_Store
+**/.DS_Store
+.env.example

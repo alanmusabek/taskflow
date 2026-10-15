@@ -1,0 +1,64 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TaskFlow — {{ team.name }}</title>
+</head>
+<body>
+    <p><a href="{% url 'teams:team_list' %}">← All teams</a></p>
+
+    <h1>{{ team.name }}</h1>
+    <p>{{ team.description|default:"No description" }}</p>
+    <p>Project: {{ team.project }}</p>
+
+    <p>
+        <a href="{% url 'teams:team_update' team_id=team.pk %}">Edit team</a>
+    </p>
+
+    <form method="post" action="{% url 'teams:team_delete' team_id=team.pk %}">
+        {% csrf_token %}
+        <button type="submit" onclick="return confirm('Delete this team?')">
+            Delete team
+        </button>
+    </form>
+
+    <h2>Members</h2>
+
+    {% for member in members %}
+        <section>
+            <strong>{{ member.user }}</strong>
+            <span> — {{ member.get_role_display }}</span>
+
+            <form method="post"
+                  action="{% url 'teams:member_update_role' team_id=team.pk membership_id=member.pk %}">
+                {% csrf_token %}
+                <select name="role">
+                    {% for value, label in member.ROLE_CHOICES %}
+                        <option value="{{ value }}" {% if member.role == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <button type="submit">Update role</button>
+            </form>
+
+            <form method="post"
+                  action="{% url 'teams:member_remove' team_id=team.pk membership_id=member.pk %}">
+                {% csrf_token %}
+                <button type="submit">Remove member</button>
+            </form>
+        </section>
+    {% empty %}
+        <p>No members in this team yet.</p>
+    {% endfor %}
+
+    <h2>Add a member</h2>
+    <form method="post" action="{% url 'teams:member_add' team_id=team.pk %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Add member</button>
+    </form>
+</body>
+</html>

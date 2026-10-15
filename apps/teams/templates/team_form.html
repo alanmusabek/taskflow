@@ -1,0 +1,23 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TaskFlow — Team form</title>
+</head>
+<body>
+    <h1>{% if team %}Edit team{% else %}Create team{% endif %}</h1>
+
+    {% for message in messages %}
+        <p>{{ message }}</p>
+    {% endfor %}
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save team</button>
+        <a href="{% url 'teams:team_list' %}">Cancel</a>
+    </form>
+</body>
+</html>

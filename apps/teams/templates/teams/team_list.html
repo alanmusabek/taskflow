@@ -1,0 +1,43 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TaskFlow — Teams</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1000px; margin: 40px auto; padding: 0 20px; background: #f5f7fb; color: #202938; }
+        header { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+        a.button { background: #2563eb; color: white; padding: 10px 16px; border-radius: 8px; text-decoration: none; }
+        .team { background: white; padding: 20px; margin: 16px 0; border-radius: 12px; box-shadow: 0 2px 8px #0000000d; }
+        .muted { color: #667085; }
+    </style>
+</head>
+<body>
+    <header>
+        <div>
+            <h1>Teams</h1>
+            <p class="muted">Manage your project teams in TaskFlow.</p>
+        </div>
+        <a class="button" href="{% url 'teams:team_create' %}">+ Create team</a>
+    </header>
+
+    {% for message in messages %}
+        <p>{{ message }}</p>
+    {% endfor %}
+
+    {% for team in teams %}
+        <section class="team">
+            <h2>{{ team.name }}</h2>
+            <p>{{ team.description|default:"No description" }}</p>
+            <p class="muted">Project: {{ team.project }}</p>
+            <a href="{% url 'teams:team_detail' team_id=team.pk %}">View team →</a>
+        </section>
+    {% empty %}
+        <section class="team">
+            <h2>No teams yet</h2>
+            <p>Create a team to start organizing project members.</p>
+        </section>
+    {% endfor %}
+</body>
+</html>

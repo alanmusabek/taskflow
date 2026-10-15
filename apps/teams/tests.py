@@ -13,7 +13,10 @@ class MembershipTests(TestCase):
         self.user = User.objects.create_user(
             email="test@example.com", password="12345678"
         )
-        self.project = Project.objects.create(name="Test project")
+        self.project = Project.objects.create(
+            name="Test project",
+            owner=self.user,
+        )
         self.team = Team.objects.create(name="Team A", project=self.project)
 
     def test_duplicate_membership_is_forbidden(self) -> None:

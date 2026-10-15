@@ -1,0 +1,38 @@
+
+{% extends "projects/base.html" %}
+
+{% block title %}{{ project.name }} | TaskFlow{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>{{ project.name }}</h1>
+
+    <p>
+        {{ project.description|default:"No description provided." }}
+    </p>
+
+    <p><strong>Owner:</strong> {{ project.owner.email }}</p>
+    <p><strong>Status:</strong> {{ project.get_status_display }}</p>
+    <p>
+        <strong>Deadline:</strong>
+        {{ project.deadline|default:"Not set" }}
+    </p>
+    <p><strong>Created:</strong> {{ project.created_at }}</p>
+    <p><strong>Updated:</strong> {{ project.updated_at }}</p>
+
+    <a href="{% url 'projects:update' project.pk %}"
+       class="button">
+        Edit
+    </a>
+
+    <a href="{% url 'projects:delete' project.pk %}"
+       class="button button-danger">
+        Delete
+    </a>
+
+    <a href="{% url 'projects:list' %}"
+       class="button button-secondary">
+        Back to Projects
+    </a>
+</div>
+{% endblock %}

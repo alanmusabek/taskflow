@@ -49,6 +49,9 @@ class Project(models.Model):
                     )
                 }
             )
+    def save(self, *args, **kwargs) -> None:
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return self.name

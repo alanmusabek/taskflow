@@ -1,7 +1,7 @@
 from typing import Any
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.db.models import (
     CASCADE,
     PROTECT,
@@ -17,11 +17,11 @@ from django.db.models import (
 )
 from django.utils import timezone as django_timezone
 
-from apps.teams.models import Membership
+from .access import is_project_participant
 
 
 class TaskStatus(TextChoices):
-    TODO = "to_do", "To Do"                   
+    TODO = "to_do", "To Do"
     IN_PROGRESS = "in_progress", "In Progress"
     DONE = "done", "Done"
 
@@ -48,19 +48,19 @@ class Task(Model):
     )
     project = ForeignKey(
         to="projects.Project",
-        on_delete=CASCADE,                  
+        on_delete=CASCADE,
         related_name="tasks",
     )
     assignee = ForeignKey(
         to=settings.AUTH_USER_MODEL,
-        on_delete=SET_NULL,                
+        on_delete=SET_NULL,
         null=True,
         blank=True,
         related_name="assigned_tasks",
     )
     created_by = ForeignKey(
         to=settings.AUTH_USER_MODEL,
-        on_delete=PROTECT,                  
+        on_delete=PROTECT,
         related_name="created_tasks",
     )
     status = CharField(
@@ -94,23 +94,30 @@ class Task(Model):
         """How the object looks in the admin and in the shell."""
         return self.title
 
-    def __is_project_participant(self, user_id: int) -> bool:
-        """Check if the user is the project owner or a member of a project team."""
-
-        if self.project.owner_id == user_id:
-            return True
-
-        return Membership.objects.filter(
-            team__project=self.project,
-            user_id=user_id,
-        ).exists()
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        """Remember the stored values so clean() can tell what changed."""
+        instance = super().from_db(db, field_names, values)
+        instance._loaded_due_date = instance.__dict__.get("due_date")
+        instance._loaded_assignee_id = instance.__dict__.get("assignee_id")
+        return instance
 
     def clean(self) -> None:
-        """Python-level validation (called in forms / full_clean())."""
+        """Python-level validation (called in forms / full_clean()).
+
+        Rules that depend on "today" or on current team membership are only
+        enforced when the relevant field is new or changed, so old tasks stay
+        editable (e.g. marking an overdue task as done, or editing a task whose
+        assignee has since left the project).
+        """
 
         errors: dict[str, str] = {}
+        is_new = self.pk is None
 
-        if self.due_date is not None:
+        due_date_changed = is_new or self.due_date != getattr(
+            self, "_loaded_due_date", None
+        )
+        if self.due_date is not None and due_date_changed:
             creation_date = (
                 django_timezone.localdate(self.created_at)
                 if self.created_at is not None
@@ -120,22 +127,28 @@ class Task(Model):
                 errors["due_date"] = "Due date cannot be earlier than creation date."
 
         if self.project_id is not None:
+            assignee_changed = is_new or self.assignee_id != getattr(
+                self, "_loaded_assignee_id", None
+            )
             if (
                 self.assignee_id is not None
-                and not self.__is_project_participant(self.assignee_id)
+                and assignee_changed
+                and not is_project_participant(self.project, self.assignee_id)
             ):
                 errors["assignee"] = (
                     "Assignee must be the project owner or a member of "
                     "a team in this project."
                 )
 
-            
+            # created_by is not a form field, so this error is reported as a
+            # non-field error. Superusers may create tasks in any project.
             if (
-                self.pk is None
+                is_new
                 and self.created_by_id is not None
-                and not self.__is_project_participant(self.created_by_id)
+                and not self.created_by.is_superuser
+                and not is_project_participant(self.project, self.created_by_id)
             ):
-                errors["created_by"] = (
+                errors[NON_FIELD_ERRORS] = (
                     "The creator must be the project owner or a member of "
                     "a team in this project."
                 )
@@ -144,6 +157,8 @@ class Task(Model):
             raise ValidationError(errors)
 
     def save(self, *args: Any, **kwargs: Any) -> None:
-        """Validate the task before saving it (same idea as the delete() override)."""
+        """Validate the task before saving it."""
         self.full_clean()
         super().save(*args, **kwargs)
+        self._loaded_due_date = self.due_date
+        self._loaded_assignee_id = self.assignee_id

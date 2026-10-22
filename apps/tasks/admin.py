@@ -80,9 +80,9 @@ class TaskAdmin(ModelAdmin):
     def get_readonly_fields(self, request: WSGIRequest, obj: Task | None = None) -> tuple[str, ...]:
         """The project and the creator of an existing task cannot be changed."""
 
-        if obj:     
+        if obj:
             return (
                 "project",
                 "created_by",
             ) + self.readonly_fields
-        return self.readonly_fields    
+        return self.readonly_fields

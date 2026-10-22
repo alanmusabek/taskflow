@@ -1,0 +1,34 @@
+{% extends "projects/base.html" %}
+{% load comments_tags %}
+
+{% block title %}{{ task.title }} | TaskFlow{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>{{ task.title }}</h1>
+
+    <p>{{ task.description|default:"No description provided."|linebreaksbr }}</p>
+
+    <p><strong>Project:</strong>
+        <a href="{% url 'projects:detail' task.project_id %}">{{ task.project.name }}</a>
+    </p>
+    <p><strong>Status:</strong> {{ task.get_status_display }}</p>
+    <p><strong>Priority:</strong> {{ task.get_priority_display }}</p>
+    <p><strong>Deadline:</strong> {{ task.due_date|default:"Not set" }}</p>
+    <p>
+        <strong>Assignee:</strong>
+        {% if task.assignee %}{{ task.assignee.email }}{% else %}Unassigned{% endif %}
+    </p>
+    <p><strong>Created by:</strong> {{ task.created_by.email }}</p>
+    <p><strong>Created:</strong> {{ task.created_at }}</p>
+    <p><strong>Updated:</strong> {{ task.updated_at }}</p>
+
+    {% if can_manage %}
+        <a href="{% url 'tasks:update' task.pk %}" class="button">Edit</a>
+        <a href="{% url 'tasks:delete' task.pk %}" class="button button-danger">Delete</a>
+    {% endif %}
+    <a href="{% url 'tasks:list' task.project_id %}" class="button button-secondary">Back to Tasks</a>
+</div>
+
+{% task_comments task %}
+{% endblock %}

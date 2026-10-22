@@ -1,6 +1,7 @@
-from django.forms import DateInput, ModelForm, Textarea, TextInput
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+from django.forms import DateInput, ModelForm, Textarea, TextInput
+
 from apps.tasks.models import Task
 
 
@@ -26,13 +27,15 @@ class TaskForm(ModelForm):
         super().__init__(*args, **kwargs)
 
         if project is not None:
-            from django.contrib.auth import get_user_model
-            from django.db.models import Q
-
-            self.fields["assignee"].queryset = get_user_model().objects.filter(
-                Q(pk=project.owner_id)
-                | Q(membership__team__project=project)
-            ).distinct()
+            # Same rule as Task.clean(): owner or member of a project team.
+            self.fields["assignee"].queryset = (
+                get_user_model()
+                .objects.filter(
+                    Q(pk=project.owner_id)
+                    | Q(membership__team__project=project)
+                )
+                .distinct()
+            )
 
     class Meta:
         model = Task

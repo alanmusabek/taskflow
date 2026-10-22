@@ -2,40 +2,19 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_http_methods
 
 from apps.projects.models import Project
-from apps.teams.models import Membership
 
+from .access import can_access_project, can_manage_task
 from .forms import TaskForm
 from .models import Task, TaskPriority, TaskStatus
-
-
-
-def _can_access_project(user, project) -> bool:
-    """Owner, superuser or a member of one of the project's teams."""
-    if user.is_superuser or project.owner_id == user.pk:
-        return True
-
-    return Membership.objects.filter(
-        team__project=project,
-        user=user,
-    ).exists()
-
-
-def _can_manage_task(user, task) -> bool:
-    """Edit/delete: creator, assignee, project owner or superuser."""
-    return (
-        user.is_superuser
-        or task.project.owner_id == user.pk
-        or task.created_by_id == user.pk
-        or task.assignee_id == user.pk
-    )
 
 
 def _get_project_for_user(request, project_pk):
     project = get_object_or_404(Project, pk=project_pk)
 
-    if not _can_access_project(request.user, project):
+    if not can_access_project(request.user, project):
         raise PermissionDenied
 
     return project
@@ -47,10 +26,10 @@ def _get_task_for_user(request, pk, manage=False):
         pk=pk,
     )
 
-    if not _can_access_project(request.user, task.project):
+    if not can_access_project(request.user, task.project):
         raise PermissionDenied
 
-    if manage and not _can_manage_task(request.user, task):
+    if manage and not can_manage_task(request.user, task):
         raise PermissionDenied
 
     return task
@@ -113,6 +92,7 @@ def task_list(request, project_pk):
 
 
 @login_required
+@require_http_methods(["GET", "POST"])
 def task_create(request, project_pk):
     project = _get_project_for_user(request, project_pk)
 
@@ -145,12 +125,13 @@ def task_detail(request, pk):
         "tasks/task_detail.html",
         {
             "task": task,
-            "can_manage": _can_manage_task(request.user, task),
+            "can_manage": can_manage_task(request.user, task),
         },
     )
 
 
 @login_required
+@require_http_methods(["GET", "POST"])
 def task_update(request, pk):
     task = _get_task_for_user(request, pk, manage=True)
 
@@ -177,6 +158,7 @@ def task_update(request, pk):
 
 
 @login_required
+@require_http_methods(["GET", "POST"])
 def task_delete(request, pk):
     task = _get_task_for_user(request, pk, manage=True)
     project_pk = task.project_id

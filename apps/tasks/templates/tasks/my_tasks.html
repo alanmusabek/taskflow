@@ -1,0 +1,43 @@
+{% extends "projects/base.html" %}
+
+{% block title %}My Tasks | TaskFlow{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>My Tasks</h1>
+    <p class="muted">Tasks assigned to you.</p>
+
+    <form method="get">
+        <div class="field">
+            <label for="status">Status</label>
+            <select name="status" id="status" onchange="this.form.submit()">
+                <option value="">All</option>
+                {% for value, label in statuses %}
+                    <option value="{{ value }}" {% if value == current_status %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <noscript><button type="submit" class="button">Filter</button></noscript>
+    </form>
+</div>
+
+{% for task in tasks %}
+    <div class="card">
+        <h2><a href="{% url 'tasks:detail' task.pk %}">{{ task.title }}</a></h2>
+        <p>
+            <strong>Project:</strong>
+            <a href="{% url 'tasks:list' task.project_id %}">{{ task.project.name }}</a>
+        </p>
+        <p>
+            <strong>Status:</strong> {{ task.get_status_display }}
+            &middot; <strong>Priority:</strong> {{ task.get_priority_display }}
+            &middot; <strong>Due:</strong> {{ task.due_date|default:"Not set" }}
+        </p>
+    </div>
+{% empty %}
+    <div class="card">
+        <h2>No tasks</h2>
+        <p class="muted">Nothing is assigned to you{% if current_status %} with this status{% endif %}.</p>
+    </div>
+{% endfor %}
+{% endblock %}

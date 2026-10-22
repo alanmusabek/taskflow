@@ -1,0 +1,36 @@
+{% extends "projects/base.html" %}
+
+{% block title %}{{ page_title }} | TaskFlow{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>{{ page_title }}</h1>
+    <p class="muted">Project: {{ project.name }}</p>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {{ form.non_field_errors }}
+
+        {% for field in form %}
+            <div class="field">
+                {{ field.label_tag }}
+                {{ field }}
+                {{ field.errors }}
+
+                {% if field.help_text %}
+                    <small class="muted">{{ field.help_text }}</small>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <button type="submit" class="button">Save Task</button>
+
+        {% if task %}
+            <a href="{% url 'tasks:detail' task.pk %}" class="button button-secondary">Cancel</a>
+        {% else %}
+            <a href="{% url 'tasks:list' project.pk %}" class="button button-secondary">Cancel</a>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

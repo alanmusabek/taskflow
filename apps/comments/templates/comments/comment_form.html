@@ -1,0 +1,19 @@
+{% extends "projects/base.html" %}
+
+{% block title %}{{ page_title }} | TaskFlow{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>{{ page_title }}</h1>
+    <p class="muted">Task: {{ task.title }}</p>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <button type="submit" class="button">Save</button>
+        <a href="{% url 'tasks:detail' task.pk %}"
+           class="button button-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

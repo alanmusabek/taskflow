@@ -1,0 +1,34 @@
+{% if allowed %}
+<section id="comments" class="card">
+    <h2>Comments ({{ comments|length }})</h2>
+
+    {% for comment in comments %}
+        <div class="comment">
+            <p>
+                <strong>{{ comment.author.first_name }} {{ comment.author.last_name }}</strong>
+                <span class="muted">
+                    {{ comment.created_at|date:"d.m.Y H:i" }}
+                    {% if comment.updated_at != comment.created_at %}(edited){% endif %}
+                </span>
+            </p>
+
+            <p>{{ comment.content|linebreaksbr }}</p>
+
+            {% if comment.user_can_modify %}
+                <a href="{% url 'comments:update' comment.pk %}"
+                   class="button button-secondary">Edit</a>
+                <a href="{% url 'comments:delete' comment.pk %}"
+                   class="button button-danger">Delete</a>
+            {% endif %}
+        </div>
+    {% empty %}
+        <p class="muted">No comments yet.</p>
+    {% endfor %}
+
+    <form method="post" action="{% url 'comments:create' task.pk %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="button">Add comment</button>
+    </form>
+</section>
+{% endif %}

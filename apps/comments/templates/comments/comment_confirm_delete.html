@@ -1,0 +1,27 @@
+{% extends "projects/base.html" %}
+
+{% block title %}Delete Comment | TaskFlow{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Delete Comment</h1>
+
+    <p>Are you sure you want to delete this comment?</p>
+    <blockquote>{{ comment.content|linebreaksbr }}</blockquote>
+
+    <p class="muted">This action cannot be undone.</p>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <button type="submit" class="button button-danger">
+            Yes, Delete
+        </button>
+
+        <a href="{% url 'tasks:detail' task.pk %}"
+           class="button button-secondary">
+            Cancel
+        </a>
+    </form>
+</div>
+{% endblock %}

@@ -1,4 +1,7 @@
+from typing import Any
+
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.forms import DateInput, ModelForm, Textarea, TextInput
 
@@ -18,6 +21,20 @@ class TaskAdminForm(ModelForm):
         labels = {
             "due_date": "Deadline",
         }
+
+    def clean_title(self) -> str:
+        """Check one field: the title."""
+        title: str = self.cleaned_data["title"]
+        if len(title) < 3:
+            raise ValidationError("Title must have at least 3 characters.")
+        return title
+
+    def clean(self) -> dict[str, Any]:
+        """Check several fields together."""
+        cleaned_data: dict[str, Any] = super().clean()
+        if cleaned_data.get("status") == "done" and not cleaned_data.get("assignee"):
+            self.add_error("assignee", "A finished task must have an assignee.")
+        return cleaned_data
 
 
 class TaskForm(ModelForm):

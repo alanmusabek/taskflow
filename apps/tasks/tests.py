@@ -158,3 +158,22 @@ class TaskViewTests(BaseCase):
         self.client.force_login(self.member)
         r = self.client.get(reverse("tasks:mine"))
         self.assertEqual(list(r.context["tasks"]), [self.task])
+
+
+class TaskAdminTests(BaseCase):
+    def setUp(self):
+        admin = make_user("admin@x.com", is_superuser=True, is_staff=True)
+        self.client.force_login(admin)
+
+    def test_changelist_and_change_page(self):
+        self.assertEqual(self.client.get(reverse("admin:tasks_task_changelist")).status_code, 200)
+        self.assertEqual(self.client.get(reverse("admin:tasks_task_change", args=[self.task.pk])).status_code, 200)
+
+    def test_admin_form_checks(self):
+        from .forms import TaskAdminForm
+
+        form = TaskAdminForm({"title": "ab", "project": self.project.pk, "created_by": self.owner.pk,
+                              "status": "done", "priority": "low"})
+        self.assertFalse(form.is_valid())
+        self.assertIn("title", form.errors)
+        self.assertIn("assignee", form.errors)

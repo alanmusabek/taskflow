@@ -37,6 +37,11 @@ class TaskAdmin(ModelAdmin):
         "description",
     )
     list_per_page = 50
+    list_select_related = (
+        "project",
+        "assignee",
+        "created_by",
+    )
     save_on_top = True
     fieldsets = (
         (
@@ -67,7 +72,7 @@ class TaskAdmin(ModelAdmin):
                 "fields": (
                     "created_at",
                     "updated_at",
-                )
+                            )
             },
         ),
     )

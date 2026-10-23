@@ -3,9 +3,7 @@ from typing import Any
 from django.conf import settings
 from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.db.models import (
-    CASCADE,
     PROTECT,
-    SET_NULL,
     CharField,
     DateField,
     DateTimeField,
@@ -41,6 +39,8 @@ class Task(Model):
 
     title = CharField(
         max_length=TITLE_MAX_LEN,
+        verbose_name="Title",
+        help_text="Short name of the task.",
     )
     description = TextField(
         blank=True,
@@ -48,12 +48,12 @@ class Task(Model):
     )
     project = ForeignKey(
         to="projects.Project",
-        on_delete=CASCADE,
+        on_delete=PROTECT,
         related_name="tasks",
     )
     assignee = ForeignKey(
         to=settings.AUTH_USER_MODEL,
-        on_delete=SET_NULL,
+        on_delete=PROTECT,
         null=True,
         blank=True,
         related_name="assigned_tasks",
@@ -76,6 +76,8 @@ class Task(Model):
     due_date = DateField(
         null=True,
         blank=True,
+        verbose_name="Deadline",
+        help_text="Cannot be earlier than the creation date.",
     )
     created_at = DateTimeField(auto_now_add=True)
     updated_at = DateTimeField(auto_now=True)
@@ -113,6 +115,9 @@ class Task(Model):
 
         errors: dict[str, str] = {}
         is_new = self.pk is None
+
+        if self.title.strip() == "":
+            errors["title"] = "Title cannot be empty"
 
         due_date_changed = is_new or self.due_date != getattr(
             self, "_loaded_due_date", None
